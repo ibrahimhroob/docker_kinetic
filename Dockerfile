@@ -23,34 +23,24 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && \
 RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 
 # install some missing libraries 
-RUN apt-get update && apt-get install libgl1-mesa-glx
-RUN apt-get install libglew-dev
-RUN apt-get install autotools-dev
-RUN apt-get install autoconf
-RUN apt-get install libtool
+RUN apt-get update && apt-get install -y libgl1-mesa-glx
+RUN apt-get install -y libglew-dev
+RUN apt-get install -y autotools-dev
+RUN apt-get install -y autoconf
+RUN apt-get install -y libtool
+RUN apt-get install -y build-essential pkg-config
 
+# ros libraries 
+RUN apt-get install -y ros-kinetic-octomap*
 
-# Install tmux and TMuLE
-#RUN DEBIAN_FRONTEND=noninteractive pip install tmule
-
-# Install Tensorflow
-#RUN pip install tensorflow tensorflow-hub
-
-# Clone TIAGo dependencies
-# RUN mkdir /home/lcastor
-#RUN cd /
-#RUN wget https://raw.githubusercontent.com/pal-robotics/tiago_tutorials/${ROS_DISTRO}-devel/tiago_public-${ROS_DISTRO}.rosinstall
-#RUN rosinstall /ros_ws/src /opt/ros/${ROS_DISTRO} tiago_public-${ROS_DISTRO}.rosinstall
-#RUN DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths /ros_ws/src --ignore-src --rosdistro ${ROS_DISTRO} --skip-keys "urdf_test omni_drive_controller orocos_kdl pal_filters libgazebo9-dev pal_usb_utils speed_limit_node camera_calibration_files pal_moveit_plugins pal_startup_msgs pal_local_joint_control pal_pcl_points_throttle_and_filter current_limit_controller hokuyo_node dynamixel_cpp pal_moveit_capabilities pal_pcl dynamic_footprint gravity_compensation_controller pal-orbbec-openni2 pal_loc_measure pal_map_manager ydlidar_ros_driver"
-
-ARG UNAME=lcastor
+ARG UNAME=baseline
 ARG UID=1000
 ARG GID=1000
 RUN groupadd -g $GID -o $UNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
-RUN echo 'lcastor:lcastor' | chpasswd
+RUN echo 'baseline:baseline' | chpasswd
 RUN adduser $UNAME sudo
-WORKDIR /home/lcastor
+WORKDIR /home/$UNAME
 #RUN cp -r /ros_ws /home/lcastor
 #RUN chown -R $UNAME:$UNAME /home/lcastor/ros_ws
 #RUN chmod 755 /home/lcastor/ros_ws
@@ -80,10 +70,42 @@ RUN mv cmake-3.13.0-Linux-x86_64 /opt/cmake-3.13.0
 RUN ln -sf /opt/cmake-3.13.0/bin/*  /usr/bin/
 RUN cmake --version
 
-#long-term localization package 
-RUN git clone https://github.com/HITSZ-NRSL/long-term-localization.git
-RUN cd long-term-localization/src
-RUN git clone https://github.com/lisilin013/third_parities.git
-RUN cd ..
-# When you build this ws for the first time, it may take a long time, be patient please.
-# RUN catkin build
+#gtest
+RUN cd /home && \
+    git clone https://github.com/google/googletest.git -b release-1.10.0 && \
+    cd googletest && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    make install
+
+
+# Abseil
+RUN cd /home && \
+    git clone https://github.com/abseil/abseil-cpp.git && \
+    cd abseil-cpp && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release && \
+    make && \
+    make install
+
+
+# libnabo
+RUN cd /home && \
+    git clone https://github.com/ethz-asl/libnabo && \
+    cd libnabo && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr .. && \
+    make && \
+    make install
+
+# long-term localization package 
+RUN cd /home && \
+    git clone https://github.com/HITSZ-NRSL/long-term-localization.git && \
+    cd long-term-localization/src && \
+    git clone https://github.com/lisilin013/third_parities.git && \
+    cd .. && \
+    catkin build

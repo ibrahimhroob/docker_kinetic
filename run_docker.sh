@@ -15,6 +15,8 @@ docker run --privileged --network host \
            -v /dev/dri:/dev/dri \
            --rm \
            -it ${image_name}  
+           -e ROS_MASTER_URI=http://Mars:11311/
+
            #--name "${image_name/:/-}" \
         #    -e ROS_MASTER_URI=${ROS_MASTER_URI} \
         #    -e ROS_IP=${ROS_IP} \ 
